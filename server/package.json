@@ -1,0 +1,50 @@
+{
+  "scripts": {
+    "test": "jest --coverage --detectOpenHandles --forceExit",
+    "test:watch": "jest --watch"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/migrations/",
+      "/seeders/",
+      "/config/"
+    ],
+    "testMatch": [
+      "**/__test__/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "controllers/**/*.js",
+      "middlewares/**/*.js",
+      "helpers/**/*.js",
+      "routes/**/*.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 90,
+        "functions": 90,
+        "lines": 90,
+        "statements": 90
+      }
+    }
+  },
+  "dependencies": {
+    "@google/genai": "^1.38.0",
+    "bcrypt": "^6.0.0",
+    "cloudinary": "^2.9.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.0.2",
+    "pg": "^8.17.1",
+    "sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "nodemon": "^3.1.11",
+    "sequelize-cli": "^6.6.5",
+    "supertest": "^7.2.2"
+  }
+}
