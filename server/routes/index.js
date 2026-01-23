@@ -1,17 +1,22 @@
-const express = require('express')
-const router = express.Router()
-const UserController = require('../controllers/UserController')
-const tripRouter = require('./routes_trip')
-const profileRouter = require('./routes_profile')
-const authentication = require('../middlewares/authentication');
+const express = require('express');
+const router = express.Router();
 
+const UserController = require('../controllers/UserController');
+const profileRouter = require('./routes_profile');
+const tripRouter = require('./routes_trip');
 
-router.post('/register', UserController.register); 
+// Health check
+router.get('/', (req, res) => {
+    res.json({ message: 'Server is running' });
+});
+
+// Public routes
+router.post('/register', UserController.register);
 router.post('/login', UserController.login);
+router.post('/google-login', UserController.googleLogin); // ✅ Tambahkan ini
 
-router.use(authentication)
+// Protected routes
+router.use('/profiles', profileRouter);
+router.use('/trips', tripRouter);
 
-router.use('/profile', profileRouter)
-router.use('/trips', tripRouter)
-
-module.exports = router
+module.exports = router;

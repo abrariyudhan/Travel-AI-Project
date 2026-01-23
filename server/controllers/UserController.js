@@ -2,20 +2,17 @@ require('dotenv').config();
 const { User } = require('../models')
 const { comparePassword } = require('../helpers/bcrypt')
 const { signToken } = require('../helpers/jwt')
+const { OAuth2Client } = require('google-auth-library');
 
 module.exports = class UserController {
 
     static async register(req, res, next) {
         try {
-            //Ambil data dari req.body
             const { email, password } = req.body
-            //Buat user baru
             const user = await User.create({ email, password })
-            //kirim response dan data yang tidak sensitif
             res.status(201).json({
                 message: `Successfully created account with email ${user.email}`
             })
-
         } catch (error) {
             console.log(error);
             next(error)
@@ -24,7 +21,6 @@ module.exports = class UserController {
 
     static async login(req, res, next) {
         try {
-            //1. ambil email, password
             const { email, password } = req.body
 
             if (!email) {
@@ -35,31 +31,82 @@ module.exports = class UserController {
                 throw { name: "BadRequest", message: "Password is required" }
             }
 
-            // 2. cek apakah emailnya ada?
             const user = await User.findOne({
-                where: {
-                    email
-                }
+                where: { email }
             })
+            
             if (!user) {
                 throw { name: "Unauthorized", message: "Invalid email/password" }
             }
 
-            // 3. check password valid atau engga
             const isValidPassword = comparePassword(password, user.password)
             if (!isValidPassword) {
                 throw { name: "Unauthorized", message: "Invalid email/password" }
             }
 
-            // 4. create (token -> kartu akses untuk pake api di aplikasi ini)
-            const access_token = signToken({ id: user.id, role: user.role })
+            const access_token = signToken({ id: user.id })
 
-            // 5. response
-            res.status(200).json({ access_token })
+            res.status(200).json({ 
+                access_token,
+                user: {
+                    id: user.id,
+                    email: user.email
+                }
+            })
         } catch (error) {
             console.log(error);
             next(error)
-            
+        }
+    }
+
+    static async googleLogin(req, res, next) {
+        try {
+            const { token } = req.headers
+
+            if (!token) {
+                throw { name: "BadRequest", message: "Token is required" }
+            }
+
+            const client = new OAuth2Client();
+
+            const ticket = await client.verifyIdToken({
+                idToken: token,
+                audience: process.env.GOOGLE_CLIENT_ID
+            });
+
+            const gPayload = ticket.getPayload();
+            console.log('Google Payload:', gPayload);
+
+            if (!gPayload.email_verified) {
+                throw { name: "Unauthorized", message: "Email not verified" }
+            }
+
+            const [user, created] = await User.findOrCreate({
+                where: {
+                    email: gPayload.email
+                },
+                defaults: {
+                    email: gPayload.email,
+                    password: "google_password_" + Math.random().toString(36)
+                },
+                hooks: false // Skip password hashing for Google users
+            });
+
+            const access_token = signToken({ 
+                id: user.id 
+            })
+
+            res.status(200).json({ 
+                access_token,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    isNewUser: created
+                }
+            });
+        } catch (err) {
+            console.log('Google login error:', err);
+            next(err)
         }
     }
 }
