@@ -1,11 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { Container, Row, Col, Card, Form, Button, Spinner, Image } from 'react-bootstrap';
-import { FaUser, FaCamera, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 import api from '../apis/client';
-import axios from 'axios';
 import Swal from 'sweetalert2';
-import showError from '../helpers/error';
+import { Card, Button, Form, Spinner } from 'react-bootstrap';
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
@@ -28,7 +25,6 @@ export default function ProfilePage() {
 
   useEffect(() => {
     fetchProfile();
-    fetchCountries();
   }, []);
 
   // Fetch countries
@@ -50,29 +46,44 @@ export default function ProfilePage() {
     }
   };
 
-  // Fetch profile
+  // ✅ FIX: Fetch profile
   const fetchProfile = async () => {
     try {
-      const { data } = await api.get('/profiles');
+      setIsLoading(true);
+      console.log('🔍 Fetching profile...');
+      const { data } = await api.get('/profiles/me');
+      console.log('✅ Profile data:', data);
       
-      // ✅ Profile exists
-      setProfile(data);
-      setPreviewUrl(data.profilePict);
-      setFormData({
-        name: data.name,
-        age: data.age,
-        gender: data.gender,
-        citizen: data.citizen
-      });
-      
-    } catch (error) {
-      if (error.response?.status === 404) {
-        // ✅ Profile not found - redirect to create
-        console.log('Profile not found, redirecting to create profile page');
-        navigate('/profile/create');
-      } else {
-        showError(error);
+      if (!data.profile) {
+        console.log('⚠️ No profile found, redirecting to create...');
+        navigate('/profile/create', { replace: true });
+        return;
       }
+
+      setProfile(data.profile);
+      setPreviewUrl(data.profile.profilePict);
+      setFormData({
+        name: data.profile.name || '',
+        age: data.profile.age || '',
+        gender: data.profile.gender || '',
+        citizen: data.profile.citizen || ''
+      });
+    } catch (error) {
+      console.error('❌ Fetch profile error:', error);
+      console.error('Error response:', error.response);
+      
+      if (error.response?.status === 404) {
+        console.log('⚠️ 404: Profile not found, redirecting...');
+        navigate('/profile/create', { replace: true });
+        return;
+      }
+      
+      const errorMessage = error.response?.data?.message || 'Failed to load profile';
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: errorMessage
+      });
     } finally {
       setIsLoading(false);
     }
@@ -112,8 +123,9 @@ export default function ProfilePage() {
     document.getElementById('photoInput').value = '';
   };
 
+  // ✅ FIX: Handle upload photo
   const handleUploadPhoto = async () => {
-    if (!profile || !profile.id) {
+    if (!profile?.id) {
       Swal.fire('Error', 'Profile data not found', 'error');
       return;
     }
@@ -147,10 +159,12 @@ export default function ProfilePage() {
         showConfirmButton: false
       });
 
-      setProfile({ ...profile, profilePict: data.profilePictUrl });
-      setPreviewUrl(data.profilePictUrl);
+      setProfile({ ...profile, profilePict: data.profilePictUrl || data.profilePict });
+      setPreviewUrl(data.profilePictUrl || data.profilePict);
       setSelectedFile(null);
-      document.getElementById('photoInput').value = '';
+      
+      const photoInput = document.getElementById('photoInput');
+      if (photoInput) photoInput.value = '';
 
     } catch (error) {
       console.error('Upload error:', error);
@@ -205,6 +219,7 @@ export default function ProfilePage() {
     setIsEditing(false);
   };
 
+  // ✅ FIX: Loading state
   if (isLoading) {
     return (
       <div className="min-vh-100 d-flex align-items-center justify-content-center">
@@ -213,7 +228,7 @@ export default function ProfilePage() {
     );
   }
 
-  // ✅ If no profile after loading, don't show anything (already redirected)
+  // ✅ FIX: Null profile handling
   if (!profile) {
     return null;
   }
