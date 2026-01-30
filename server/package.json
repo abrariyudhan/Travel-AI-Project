@@ -1,5 +1,7 @@
 {
   "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
     "test": "cross-env NODE_ENV=test jest --coverage --detectOpenHandles --forceExit",
     "test:watch": "cross-env NODE_ENV=test jest --watch",
     "test:verbose": "cross-env NODE_ENV=test jest --coverage --verbose --detectOpenHandles",
