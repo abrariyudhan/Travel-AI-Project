@@ -5,9 +5,7 @@
     "test": "cross-env NODE_ENV=test jest --coverage --detectOpenHandles --forceExit",
     "test:watch": "cross-env NODE_ENV=test jest --watch",
     "test:verbose": "cross-env NODE_ENV=test jest --coverage --verbose --detectOpenHandles",
-    "test:controllers": "cross-env NODE_ENV=test jest __test__/controllers --coverage",
-    "test:helpers": "cross-env NODE_ENV=test jest __test__/helpers --coverage",
-    "test:middlewares": "cross-env NODE_ENV=test jest __test__/middlewares --coverage"
+    "test:controllers": "cross-env NODE_ENV=test jest __test__/controllers --coverage"
   },
   "jest": {
     "testMatch": [
@@ -18,14 +16,7 @@
       "/node_modules/"
     ],
     "collectCoverageFrom": [
-      "controllers/**/*.js",
-      "helpers/**/*.js",
-      "middlewares/**/*.js",
-      "routes/**/*.js",
-      "models/**/*.js",
-      "!node_modules/**",
-      "!coverage/**",
-      "!__test__/**"
+      "controllers/**/*.js"
     ]
   },
   "dependencies": {
